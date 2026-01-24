@@ -1,0 +1,895 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8HfU17HaJyd4"
+      },
+      "source": [
+        "# Practical Application III: Comparing Classifiers\n",
+        "\n",
+        "**Overview**: In this practical application, your goal is to compare the performance of the classifiers we encountered in this section, namely K Nearest Neighbor, Logistic Regression, Decision Trees, and Support Vector Machines.  We will utilize a dataset related to marketing bank products over the telephone.  \n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "UWIsrDY6Jyd6"
+      },
+      "source": [
+        "### Getting Started\n",
+        "\n",
+        "Our dataset comes from the UCI Machine Learning repository [link](https://archive.ics.uci.edu/ml/datasets/bank+marketing).  The data is from a Portugese banking institution and is a collection of the results of multiple marketing campaigns.  We will make use of the article accompanying the dataset [here](CRISP-DM-BANK.pdf) for more information on the data and features.\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hykfVk8rJyd6"
+      },
+      "source": [
+        "### Problem 1: Understanding the Data\n",
+        "\n",
+        "To gain a better understanding of the data, please read the information provided in the UCI link above, and examine the **Materials and Methods** section of the paper.  How many marketing campaigns does this data represent?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "lz70GSGwJyd6"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8Yx5bIj8Jyd7"
+      },
+      "source": [
+        "### Problem 2: Read in the Data\n",
+        "\n",
+        "Use pandas to read in the dataset `bank-additional-full.csv` and assign to a meaningful variable name."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 30,
+      "metadata": {
+        "id": "tsPMF16-Jyd7"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import time\n",
+        "from pandas import DataFrame\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.metrics import accuracy_score,precision_score,recall_score,f1_score\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.neighbors import KNeighborsClassifier\n",
+        "from sklearn.tree import DecisionTreeClassifier\n",
+        "from sklearn.svm import SVC\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 18,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kWLHBZoCJyd7",
+        "outputId": "2b051a1e-3edf-47aa-d1d1-82a4a757c4d8"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "   age        job  marital    education  default housing loan    contact  \\\n",
+            "0   56  housemaid  married     basic.4y       no      no   no  telephone   \n",
+            "1   57   services  married  high.school  unknown      no   no  telephone   \n",
+            "2   37   services  married  high.school       no     yes   no  telephone   \n",
+            "3   40     admin.  married     basic.6y       no      no   no  telephone   \n",
+            "4   56   services  married  high.school       no      no  yes  telephone   \n",
+            "\n",
+            "  month day_of_week  ...  campaign  pdays  previous     poutcome emp.var.rate  \\\n",
+            "0   may         mon  ...         1    999         0  nonexistent          1.1   \n",
+            "1   may         mon  ...         1    999         0  nonexistent          1.1   \n",
+            "2   may         mon  ...         1    999         0  nonexistent          1.1   \n",
+            "3   may         mon  ...         1    999         0  nonexistent          1.1   \n",
+            "4   may         mon  ...         1    999         0  nonexistent          1.1   \n",
+            "\n",
+            "   cons.price.idx  cons.conf.idx  euribor3m  nr.employed   y  \n",
+            "0          93.994          -36.4      4.857       5191.0  no  \n",
+            "1          93.994          -36.4      4.857       5191.0  no  \n",
+            "2          93.994          -36.4      4.857       5191.0  no  \n",
+            "3          93.994          -36.4      4.857       5191.0  no  \n",
+            "4          93.994          -36.4      4.857       5191.0  no  \n",
+            "\n",
+            "[5 rows x 21 columns]\n",
+            "   age          job  marital          education default  housing     loan  \\\n",
+            "0   30  blue-collar  married           basic.9y      no      yes       no   \n",
+            "1   39     services   single        high.school      no       no       no   \n",
+            "2   25     services  married        high.school      no      yes       no   \n",
+            "3   38     services  married           basic.9y      no  unknown  unknown   \n",
+            "4   47       admin.  married  university.degree      no      yes       no   \n",
+            "\n",
+            "     contact month day_of_week  ...  campaign  pdays  previous     poutcome  \\\n",
+            "0   cellular   may         fri  ...         2    999         0  nonexistent   \n",
+            "1  telephone   may         fri  ...         4    999         0  nonexistent   \n",
+            "2  telephone   jun         wed  ...         1    999         0  nonexistent   \n",
+            "3  telephone   jun         fri  ...         3    999         0  nonexistent   \n",
+            "4   cellular   nov         mon  ...         1    999         0  nonexistent   \n",
+            "\n",
+            "  emp.var.rate  cons.price.idx  cons.conf.idx  euribor3m  nr.employed   y  \n",
+            "0         -1.8          92.893          -46.2      1.313       5099.1  no  \n",
+            "1          1.1          93.994          -36.4      4.855       5191.0  no  \n",
+            "2          1.4          94.465          -41.8      4.962       5228.1  no  \n",
+            "3          1.4          94.465          -41.8      4.959       5228.1  no  \n",
+            "4         -0.1          93.200          -42.0      4.191       5195.8  no  \n",
+            "\n",
+            "[5 rows x 21 columns]\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(4119, 21)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 18
+        }
+      ],
+      "source": [
+        "df = pd.read_csv('bank-additional-full.csv', sep = ';')\n",
+        "df.isnull().sum()\n",
+        "print(df.head())\n",
+        "df1=pd.read_csv('bank-additional.csv', sep = ';')\n",
+        "df1.isnull().sum()\n",
+        "print(df1.head())\n",
+        "df1.shape\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 19,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "-D2ItlaUJyd8",
+        "outputId": "9659577a-1ef1-4a9f-b959-88598114e908"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Index(['age', 'job', 'marital', 'education', 'default', 'housing', 'loan',\n",
+            "       'contact', 'month', 'day_of_week', 'duration', 'campaign', 'pdays',\n",
+            "       'previous', 'poutcome', 'emp.var.rate', 'cons.price.idx',\n",
+            "       'cons.conf.idx', 'euribor3m', 'nr.employed', 'y'],\n",
+            "      dtype='object')\n",
+            "Index(['age', 'job', 'marital', 'education', 'default', 'housing', 'loan',\n",
+            "       'contact', 'month', 'day_of_week', 'duration', 'campaign', 'pdays',\n",
+            "       'previous', 'poutcome', 'emp.var.rate', 'cons.price.idx',\n",
+            "       'cons.conf.idx', 'euribor3m', 'nr.employed', 'y'],\n",
+            "      dtype='object')\n"
+          ]
+        }
+      ],
+      "source": [
+        "df.head()\n",
+        "print(df.columns)\n",
+        "print(df1.columns)\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-GhrOIZFJyd8"
+      },
+      "source": [
+        "### Problem 3: Understanding the Features\n",
+        "\n",
+        "\n",
+        "Examine the data description below, and determine if any of the features are missing values or need to be coerced to a different data type.\n",
+        "\n",
+        "\n",
+        "```\n",
+        "Input variables:\n",
+        "# bank client data:\n",
+        "1 - age (numeric)\n",
+        "2 - job : type of job (categorical: 'admin.','blue-collar','entrepreneur','housemaid','management','retired','self-employed','services','student','technician','unemployed','unknown')\n",
+        "3 - marital : marital status (categorical: 'divorced','married','single','unknown'; note: 'divorced' means divorced or widowed)\n",
+        "4 - education (categorical: 'basic.4y','basic.6y','basic.9y','high.school','illiterate','professional.course','university.degree','unknown')\n",
+        "5 - default: has credit in default? (categorical: 'no','yes','unknown')\n",
+        "6 - housing: has housing loan? (categorical: 'no','yes','unknown')\n",
+        "7 - loan: has personal loan? (categorical: 'no','yes','unknown')\n",
+        "# related with the last contact of the current campaign:\n",
+        "8 - contact: contact communication type (categorical: 'cellular','telephone')\n",
+        "9 - month: last contact month of year (categorical: 'jan', 'feb', 'mar', ..., 'nov', 'dec')\n",
+        "10 - day_of_week: last contact day of the week (categorical: 'mon','tue','wed','thu','fri')\n",
+        "11 - duration: last contact duration, in seconds (numeric). Important note: this attribute highly affects the output target (e.g., if duration=0 then y='no'). Yet, the duration is not known before a call is performed. Also, after the end of the call y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.\n",
+        "# other attributes:\n",
+        "12 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)\n",
+        "13 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)\n",
+        "14 - previous: number of contacts performed before this campaign and for this client (numeric)\n",
+        "15 - poutcome: outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')\n",
+        "# social and economic context attributes\n",
+        "16 - emp.var.rate: employment variation rate - quarterly indicator (numeric)\n",
+        "17 - cons.price.idx: consumer price index - monthly indicator (numeric)\n",
+        "18 - cons.conf.idx: consumer confidence index - monthly indicator (numeric)\n",
+        "19 - euribor3m: euribor 3 month rate - daily indicator (numeric)\n",
+        "20 - nr.employed: number of employees - quarterly indicator (numeric)\n",
+        "\n",
+        "Output variable (desired target):\n",
+        "21 - y - has the client subscribed a term deposit? (binary: 'yes','no')\n",
+        "```\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "uRw1KqAeJyd8"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ix5imD_bJyd8"
+      },
+      "source": [
+        "### Problem 4: Understanding the Task\n",
+        "\n",
+        "After examining the description and data, your goal now is to clearly state the *Business Objective* of the task.  State the objective below."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 20,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "hdYt7EScJyd9",
+        "outputId": "ab3bf9ed-69d3-44e2-9759-8a04ded5ef5c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "RangeIndex: 41188 entries, 0 to 41187\n",
+            "Data columns (total 21 columns):\n",
+            " #   Column          Non-Null Count  Dtype  \n",
+            "---  ------          --------------  -----  \n",
+            " 0   age             41188 non-null  int64  \n",
+            " 1   job             41188 non-null  object \n",
+            " 2   marital         41188 non-null  object \n",
+            " 3   education       41188 non-null  object \n",
+            " 4   default         41188 non-null  object \n",
+            " 5   housing         41188 non-null  object \n",
+            " 6   loan            41188 non-null  object \n",
+            " 7   contact         41188 non-null  object \n",
+            " 8   month           41188 non-null  object \n",
+            " 9   day_of_week     41188 non-null  object \n",
+            " 10  duration        41188 non-null  int64  \n",
+            " 11  campaign        41188 non-null  int64  \n",
+            " 12  pdays           41188 non-null  int64  \n",
+            " 13  previous        41188 non-null  int64  \n",
+            " 14  poutcome        41188 non-null  object \n",
+            " 15  emp.var.rate    41188 non-null  float64\n",
+            " 16  cons.price.idx  41188 non-null  float64\n",
+            " 17  cons.conf.idx   41188 non-null  float64\n",
+            " 18  euribor3m       41188 non-null  float64\n",
+            " 19  nr.employed     41188 non-null  float64\n",
+            " 20  y               41188 non-null  object \n",
+            "dtypes: float64(5), int64(5), object(11)\n",
+            "memory usage: 6.6+ MB\n"
+          ]
+        }
+      ],
+      "source": [
+        "df.info()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "4Is3JdldJyd9"
+      },
+      "outputs": [],
+      "source": [
+        "# The primary business objective is to accurately identify and target customers who are most likely\n",
+        "# subscibe to the bank products following a telephone marketing capaign.by analyzing customer demographics,\n",
+        "# previous interactions, and campaign details, the goal is to develop predictive modelsthat enable the bank\n",
+        "# to optimize  marketing efforts, improve conversion rates, and allocate resource more efficiently. This will\n",
+        "# help the bank increase product adoption, reduce marketing costs, and enhance customer satisfaction by focusing\n",
+        "# outreach on individuals with the highest likelihood of responding positively."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "38yFtcQ2Jyd9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YwFFB-JMJyd9"
+      },
+      "source": [
+        "### Problem 5: Engineering Features\n",
+        "\n",
+        "Now that you understand your business objective, we will build a basic model to get started.  Before we can do this, we must work to encode the data.  Using just the bank information features, prepare the features and target column for modeling with appropriate encoding and transformations."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 21,
+      "metadata": {
+        "id": "GPjjvldEJyd9"
+      },
+      "outputs": [],
+      "source": [
+        "# Assume y column is the target and all other columns are features\n",
+        "X=df.drop('y',axis=1)\n",
+        "y=df['y']\n",
+        "# Preprocessing (encoding categorical variables if needed)\n",
+        "X=pd.get_dummies(X)\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "zzXibbDCJyd9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "qWrrrgqEJyd9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lHhWI2PWJyd9"
+      },
+      "source": [
+        "### Problem 6: Train/Test Split\n",
+        "\n",
+        "With your data prepared, split it into a train and test set."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "fRYlZ93OJyd9"
+      },
+      "outputs": [],
+      "source": [
+        "# Split the data\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "cNRPrk3SJyd9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oS78_GgfJyd9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "nxUa5HFhJyd9"
+      },
+      "source": [
+        "### Problem 7: A Baseline Model\n",
+        "\n",
+        "Before we build our first model, we want to establish a baseline.  What is the baseline performance that our classifier should aim to beat?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "hgV68THbJyd-"
+      },
+      "outputs": [],
+      "source": [
+        "# The most common baseline  for clssification tasks is the accuracy of a simple model that always predicts\n",
+        "# the majority class (ie the class that occurs most frequently in the dataset)\n",
+        "# For example, if 85% of customer in the dataset did not subscribe the product, a model that always predicts\n",
+        "# \"no subscription\" would have an accuracy of 85%\n",
+        "# The classifiers that we would build should aim to beat the baseline accuracy. However if the data is imbalanced\n",
+        "# (far more 'no' that 'yes' responses) also consider baseline metrics for precision, recall, and F1 score for the minority class ('yes)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 23,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "jA8GcM2fJyd-",
+        "outputId": "9c8011f9-e0de-4123-939f-6ccf6640a26d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "0.8873458288821987\n"
+          ]
+        }
+      ],
+      "source": [
+        "maj_class=y.value_counts().idxmax()\n",
+        "baseline_accuracy=(y==maj_class).mean()\n",
+        "print(baseline_accuracy)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "0WWcrAs-Jyd-"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1c-k2TiuJyd-"
+      },
+      "source": [
+        "### Problem 8: A Simple Model\n",
+        "\n",
+        "Use Logistic Regression to build a basic model on your data.  "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 28,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "-2HNTG0MJyd-",
+        "outputId": "786c65cd-a0a2-4225-8078-cbdd4fecef3d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "0.9101723719349356\n",
+            "0.662771285475793\n",
+            "0.42459893048128344\n",
+            "0.5176010430247718\n"
+          ]
+        }
+      ],
+      "source": [
+        "lr=LogisticRegression(max_iter=10000)\n",
+        "lr.fit(X_train, y_train)\n",
+        "y_pred = lr.predict(X_test)\n",
+        "print(accuracy_score(y_test, y_pred))\n",
+        "print(precision_score(y_test, y_pred,pos_label='yes'))\n",
+        "print(recall_score(y_test, y_pred,pos_label='yes'))\n",
+        "print(f1_score(y_test, y_pred,pos_label='yes'))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "arB2QHdRJyd-"
+      },
+      "source": [
+        "### Problem 9: Score the Model\n",
+        "\n",
+        "What is the accuracy of your model?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "3_3LT95cJyd-"
+      },
+      "outputs": [],
+      "source": [
+        "# 91%"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "sGoKK0WzJyd-"
+      },
+      "source": [
+        "### Problem 10: Model Comparisons\n",
+        "\n",
+        "Now, we aim to compare the performance of the Logistic Regression model to our KNN algorithm, Decision Tree, and SVM models.  Using the default settings for each of the models, fit and score each.  Also, be sure to compare the fit time of each of the models.  Present your findings in a `DataFrame` similar to that below:\n",
+        "\n",
+        "| Model | Train Time | Train Accuracy | Test Accuracy |\n",
+        "| ----- | ---------- | -------------  | -----------   |\n",
+        "|     |    |.     |.     |"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 32,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Z26CUm9qJyd-",
+        "outputId": "e163e110-102a-4bb5-84d6-f2b963f99fb5"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "                 Model  Train Accuracy  Test Accuracy  Fit Time (s)\n",
+            "0  Logistic Regression        0.911533       0.910172    163.492618\n",
+            "1                  KNN        0.919879       0.898155      0.047372\n",
+            "2        Decision Tree        1.000000       0.887837      0.377787\n",
+            "3                  SVM        0.928134       0.909080     41.203136\n"
+          ]
+        }
+      ],
+      "source": [
+        "scaler = StandardScaler()\n",
+        "X_train_scaled = scaler.fit_transform(X_train)\n",
+        "X_test_scaled = scaler.transform(X_test)\n",
+        "models = {\n",
+        "    'Logistic Regression': LogisticRegression(max_iter=10000),\n",
+        "    'KNN': KNeighborsClassifier(),\n",
+        "    'Decision Tree': DecisionTreeClassifier(),\n",
+        "    'SVM': SVC()\n",
+        "}\n",
+        "results = [] # Initialize as a list\n",
+        "for name, model in models.items():\n",
+        "    start_time = time.time() # Capture start time before fitting\n",
+        "    if name in ['KNN','SVM']:\n",
+        "      model.fit(X_train_scaled, y_train)\n",
+        "    else:\n",
+        "      model.fit(X_train, y_train)\n",
+        "    end_time = time.time() # Capture end time after fitting\n",
+        "    fit_duration = end_time - start_time # Calculate fit duration\n",
+        "\n",
+        "    # Make predictions\n",
+        "    if name in ['KNN','SVM']:\n",
+        "      train_pred=model.predict(X_train_scaled)\n",
+        "      test_pred=model.predict(X_test_scaled)\n",
+        "    else:\n",
+        "      train_pred=model.predict(X_train)\n",
+        "      test_pred=model.predict(X_test)\n",
+        "\n",
+        "    train_accuracy = accuracy_score(y_train, train_pred)\n",
+        "    test_accuracy = accuracy_score(y_test, test_pred)\n",
+        "    results.append({\n",
+        "        'Model': name,\n",
+        "        'Train Accuracy': train_accuracy,\n",
+        "        'Test Accuracy': test_accuracy,\n",
+        "        'Fit Time (s)': fit_duration # Use the calculated duration\n",
+        "    })\n",
+        "\n",
+        "results_df=DataFrame(results) # Create DataFrame once after the loop\n",
+        "print(results_df)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "bRLB7ia2Jyd-"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [],
+      "metadata": {
+        "id": "p1bj0el6QU0g"
+      }
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "M6Lpt9CJJyd-"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CYvA3ZgQJyd-"
+      },
+      "source": [
+        "### Problem 11: Improving the Model\n",
+        "\n",
+        "Now that we have some basic models on the board, we want to try to improve these.  Below, we list a few things to explore in this pursuit.\n",
+        "\n",
+        "\n",
+        "- Hyperparameter tuning and grid search.  All of our models have additional hyperparameters to tune and explore.  For example the number of neighbors in KNN or the maximum depth of a Decision Tree.  \n",
+        "- Adjust your performance metric"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 39,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "HKaGqUEkJyd-",
+        "outputId": "8d14e13a-24aa-4fa3-c68b-93653fe3deb8"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Best Decision Tree Parameters: {'max_depth': 5, 'min_samples_split': 5}\n",
+            "Best Decision Tree CV Score: 0.91350531107739\n",
+            "Best KNN Parameters: {'n_neighbors': 10, 'weights': 'distance'}\n",
+            "Best KNN CV Score: 0.898300455235205\n"
+          ]
+        }
+      ],
+      "source": [
+        "from sklearn.model_selection import GridSearchCV\n",
+        "dt_params={\n",
+        "    'max_depth' : [3,5,7,10,None],\n",
+        "    'min_samples_split' : [2,5,10],\n",
+        "}\n",
+        "dt_grid=GridSearchCV(DecisionTreeClassifier(),dt_params,cv=5,scoring='accuracy')\n",
+        "dt_grid.fit(X_train,y_train)\n",
+        "print(\"Best Decision Tree Parameters:\", dt_grid.best_params_)\n",
+        "print(\"Best Decision Tree CV Score:\",dt_grid.best_score_)\n",
+        "knn_params = {\n",
+        "    'n_neighbors': [3, 5, 7, 10],\n",
+        "    'weights' : ['uniform', 'distance']\n",
+        "}\n",
+        "knn_grid = GridSearchCV(KNeighborsClassifier(), knn_params, cv=5, scoring='accuracy')\n",
+        "knn_grid.fit(X_train_scaled, y_train)\n",
+        "print(\"Best KNN Parameters:\", knn_grid.best_params_)\n",
+        "print(\"Best KNN CV Score:\",knn_grid.best_score_)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 40,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "s9zVbil9Jyd-",
+        "outputId": "07970c6e-da34-4be2-ea58-7b3eb11dfeb2"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/sklearn/model_selection/_validation.py:528: FitFailedWarning: \n",
+            "30 fits failed out of a total of 60.\n",
+            "The score on these train-test partitions for these parameters will be set to nan.\n",
+            "If these failures are not expected, you can try to debug them by setting error_score='raise'.\n",
+            "\n",
+            "Below are more details about the failures:\n",
+            "--------------------------------------------------------------------------------\n",
+            "30 fits failed with the following error:\n",
+            "Traceback (most recent call last):\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/sklearn/model_selection/_validation.py\", line 866, in _fit_and_score\n",
+            "    estimator.fit(X_train, y_train, **fit_params)\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/sklearn/base.py\", line 1382, in wrapper\n",
+            "    estimator._validate_params()\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/sklearn/base.py\", line 436, in _validate_params\n",
+            "    validate_parameter_constraints(\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/sklearn/utils/_param_validation.py\", line 98, in validate_parameter_constraints\n",
+            "    raise InvalidParameterError(\n",
+            "sklearn.utils._param_validation.InvalidParameterError: The 'solver' parameter of LogisticRegression must be a str among {'saga', 'newton-cholesky', 'newton-cg', 'lbfgs', 'liblinear', 'sag'}. Got 'ibfgs' instead.\n",
+            "\n",
+            "  warnings.warn(some_fits_failed_message, FitFailedWarning)\n",
+            "/usr/local/lib/python3.12/dist-packages/sklearn/model_selection/_search.py:1108: UserWarning: One or more of the test scores are non-finite: [0.90925645        nan 0.90998483        nan 0.90998483        nan\n",
+            " 0.91004552        nan 0.91019727        nan 0.90989378        nan]\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Best Logistic Regression Parameters: {'C': 10, 'penalty': 'l2', 'solver': 'liblinear'}\n",
+            "Best Logistic Regression CV Score: 0.9101972685887709\n"
+          ]
+        }
+      ],
+      "source": [
+        "lr_params = {\n",
+        "    'C': [0.001, 0.01, 0.1, 1, 10, 100],\n",
+        "    'penalty': ['l2'],\n",
+        "    'solver': ['liblinear','ibfgs']\n",
+        "}\n",
+        "lr_grid = GridSearchCV(LogisticRegression(max_iter=10000), lr_params, cv=5, scoring='accuracy')\n",
+        "lr_grid.fit(X_train, y_train)\n",
+        "print(\"Best Logistic Regression Parameters:\", lr_grid.best_params_)\n",
+        "print(\"Best Logistic Regression CV Score:\",lr_grid.best_score_)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "hsZIjg_wJyd-"
+      },
+      "outputs": [],
+      "source": [
+        "svm_params = {\n",
+        "    'C': [0.1, 1,10,100],\n",
+        "    'kernel': ['linear', 'rbf', 'poly'],\n",
+        "    'gamma': ['scale', 'auto']\n",
+        "}\n",
+        "svm_grid = GridSearchCV(SVC(), svm_params, cv=5, scoring='accuracy')\n",
+        "svm_grid.fit(X_train_scaled, y_train)\n",
+        "print(\"Best SVM Parameters:\", svm_grid.best_params_)\n",
+        "print(\"Best SVM CV Score:\",svm_grid.best_score_)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "zYH-WWA_Jyd_"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "6NA7SQXhJyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "TH7P_-n-JyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "xGD_k7uYJyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "1oDJvPtBJyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ahUSOnQkJyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "OgV3iOcqJyeR"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "qYwWRsgWJyeS"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "S6KpEG73JyeS"
+      },
+      "source": [
+        "##### Questions"
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3 (ipykernel)",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.11.9"
+    },
+    "colab": {
+      "provenance": []
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
