@@ -69,6 +69,33 @@ print("Best SVM Parameters:", svm_grid.best_params_)
 print("Best SVM CV Score:",svm_grid.best_score_)
 
 
+I just ran a 2nd set of same data (ank-additional.csv) with 4119 rows compared to the original 41118 records
+
+from sklearn.model_selection import GridSearchCV
+df1=pd.read_csv('bank-additional.csv', sep = ';')
+df1.isnull().sum()
+X=df1.drop('y',axis=1)
+y=df1['y']
+X=pd.get_dummies(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+svm_params = {
+    'C': [0.1, 1,10,100],
+    'kernel': ['linear', 'rbf', 'poly'],
+    'gamma': ['scale', 'auto']
+}
+svm_grid = GridSearchCV(SVC(), svm_params, cv=5, scoring='accuracy')
+svm_grid.fit(X_train_scaled, y_train)
+print("Best SVM Parameters:", svm_grid.best_params_)
+print("Best SVM CV Score:",svm_grid.best_score_)
+
+Best SVM Parameters: {'C': 10, 'gamma': 'scale', 'kernel': 'linear'}
+Best SVM CV Score: 0.9119878603945372
+
 Colab link:
 
 https://colab.research.google.com/drive/1w_0TwDsF8np_TNSKrSJqAOoi2drpwgeR#scrollTo=hsZIjg_wJyd-
